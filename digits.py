@@ -7,66 +7,12 @@ import random
 import matplotlib.pyplot as plt
 
 
-#
-# MNIST Data Loader and Plotter 
-#
-class MnistData(object):
-    def load_data(self, images_filepath, labels_filepath):        
-        labels = []
-        with gzip.open(labels_filepath, 'rb') as file:
-            magic, size = struct.unpack(">II", file.read(8))
-            if magic != 2049:
-                raise ValueError('Magic number mismatch, expected 2049, got {}'.format(magic))
-            labels_data = array("B", file.read())
-            labels = np.eye(10)[labels_data]      
-        
-        with gzip.open(images_filepath, 'rb') as file:
-            magic, size, rows, cols = struct.unpack(">IIII", file.read(16))
-            print(str((magic, size, rows, cols)))
-            if magic != 2051:
-                raise ValueError('Magic number mismatch, expected 2051, got {}'.format(magic))
-            image_data = array("B", file.read())
-            #image_data = image_data.astype("float32") / 255
-            image_data = image_data / 255
-            images = np.reshape(image_data, (size, rows * cols))   
-
-        print(str(labels.shape))
-        print(str(images.shape))
-        print(str(labels[10]))
-        print(str(images[10]))
-        
-        
-        return images, labels
-            
-        images = []
-        for i in range(size):
-            images.append([0] * rows * cols)
-        for i in range(size):
-            img = np.array(image_data[i * rows * cols:(i + 1) * rows * cols])
-            img = img.reshape(28, 28)
-            images[i][:] = img            
-        
-        return images, labels
-    
-    def show_image(self, image, title_text):
-        plt.imshow(image, cmap=plt.cm.gray)
-        plt.title(title_text, fontsize = 14)
-        plt.show()
-            
- 
-
-
-
 def main():
     print("Loading data...")
     input_path = './data'
     training_images_filepath = join(input_path, 'train-images-idx3-ubyte.gz')
     training_labels_filepath = join(input_path, 'train-labels-idx1-ubyte.gz')
-    mnist_data = MnistData()
-    (images, labels) = mnist_data.load_data(training_images_filepath, training_labels_filepath)
-
-
-    print("Training the model...")
+    (images, labels, label_digits) = load_data(training_images_filepath, training_labels_filepath)
 
     """
     w = weights, b = bias, i = input, h = hidden, o = output, l = label
@@ -80,6 +26,7 @@ def main():
     learn_rate = 0.01
     nr_correct = 0
     epochs = 3
+    print("Training the model...")
     for epoch in range(epochs):
         for img, l in zip(images, labels):
             img.shape += (1,)
@@ -110,7 +57,9 @@ def main():
 
     # Show results
     while True:
-        index = int(input("Enter a number (0 - 59999): "))
+        index = int(input("Enter a number (0 - 59999), or -1 for quit: "))
+        if index < 0:
+            return
         img = images[index]
         plt.imshow(img.reshape(28, 28), cmap="Greys")
 
@@ -122,24 +71,29 @@ def main():
         o_pre = b_h_o + w_h_o @ h
         o = 1 / (1 + np.exp(-o_pre))
 
-        plt.title(f"training image [{index}], label: {labels[index]}, recognized: {o.argmax()}")
+        plt.title(f"training image [{index}], label: {label_digits[index]}, recognized: {o.argmax()}")
         plt.show()
 
 
-    r = random.randint(1, 60000)
-    mnist_data.show_image(images[r], 'training image [' + str(r) + '] = ' + str(labels[r]))
+def load_data(images_filepath, labels_filepath):        
+    labels = []
+    with gzip.open(labels_filepath, 'rb') as file:
+        magic, size = struct.unpack(">II", file.read(8))
+        if magic != 2049:
+            raise ValueError('Magic number mismatch, expected 2049, got {}'.format(magic))
+        labels_data = array("B", file.read())
+        labels = np.eye(10)[labels_data]      
+    
+    with gzip.open(images_filepath, 'rb') as file:
+        magic, size, rows, cols = struct.unpack(">IIII", file.read(16))
+        if magic != 2051:
+            raise ValueError('Magic number mismatch, expected 2051, got {}'.format(magic))
+        image_data = array("B", file.read())
+        images = np.reshape(image_data, (size, rows * cols))  
+        images = images / 255    
 
-    r = random.randint(1, 60000)
-    mnist_data.show_image(images[r], 'training image [' + str(r) + '] = ' + str(labels[r]))
-
-
-
-
-
+    return images, labels, labels_data
 
 
 if __name__ == "__main__":
     main()
-
-
-
