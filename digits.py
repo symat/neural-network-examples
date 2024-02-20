@@ -3,7 +3,6 @@ import struct
 import gzip
 from array import array
 from os.path  import join
-import random
 import matplotlib.pyplot as plt
 
 
@@ -61,7 +60,10 @@ def main():
         if index < 0:
             return
         img = images[index]
+        plt.figure(figsize=(10,7))
         plt.imshow(img.reshape(28, 28), cmap="Greys")
+        plt.rcParams.update({'font.size': 25})
+
 
         img.shape += (1,)
         # Forward propagation input -> hidden
@@ -93,7 +95,6 @@ def load_data(images_filepath, labels_filepath):
         images = images / 255    
 
     return images, labels, labels_data
-
 
 if __name__ == "__main__":
     main()
